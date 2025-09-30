@@ -11,3 +11,28 @@
 # Settings
 .claude/settings.json
 .claude/settings.local.json
+
+# Prisma
+/generated/prisma
+node_modules/
+.env
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Dependencies
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.log
+.DS_Store
+*.pem
