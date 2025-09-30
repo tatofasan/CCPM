@@ -1,0 +1,13 @@
+# CCPM (Claude Code PM) directories
+.claude/epics/
+.claude/prds/
+
+# OS files
+.DS_Store
+
+# IDE files
+.idea/
+
+# Settings
+.claude/settings.json
+.claude/settings.local.json
