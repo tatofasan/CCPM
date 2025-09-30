@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Get dropshipper profile
     const dropshipperProfile = await prisma.dropshipperProfile.findUnique({
-      where: { userId: user.id },
+      where: { userId: user.userId },
       select: { id: true },
     });
 

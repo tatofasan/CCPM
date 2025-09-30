@@ -298,7 +298,7 @@ async function main() {
   await prisma.walletTransaction.create({
     data: {
       dropshipperId: dropshipperProfile1.id,
-      type: 'SALE_COMMISSION',
+      type: 'ORDER_CHARGE',
       creditAmount: 14250,
       debitAmount: 0,
       balanceAfter: 14250,
