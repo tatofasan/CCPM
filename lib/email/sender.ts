@@ -20,7 +20,11 @@ export type EmailTemplate =
   | 'withdrawal-rejected'
   | 'deposit-approved'
   | 'deposit-rejected'
-  | 'low-stock-alert';
+  | 'low-stock-alert'
+  | 'ticket-created'
+  | 'ticket-reply'
+  | 'ticket-assigned'
+  | 'ticket-status-change';
 
 export interface EmailJobData {
   to: string | string[];
@@ -55,9 +59,34 @@ function getTemplateComponent(template: EmailTemplate, variables: Record<string,
       return DepositRejectedEmail(templateVars as any);
     case 'low-stock-alert':
       return LowStockAlertEmail(templateVars as any);
+    // Support ticket templates (to be implemented by Stream D)
+    case 'ticket-created':
+    case 'ticket-reply':
+    case 'ticket-assigned':
+    case 'ticket-status-change':
+      // Placeholder - return a simple text email component for now
+      // Stream D will implement proper React Email templates
+      return createPlaceholderTemplate(template, templateVars);
     default:
       throw new Error(`Unknown email template: ${template}`);
   }
+}
+
+/**
+ * Create a simple placeholder email component for templates not yet implemented
+ */
+function createPlaceholderTemplate(template: string, variables: Record<string, any>) {
+  // Return a simple HTML structure
+  return {
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>${template.replace(/-/g, ' ').toUpperCase()}</h2>
+        <pre>${JSON.stringify(variables, null, 2)}</pre>
+        <p>This is a placeholder email. Actual template will be implemented in Stream D.</p>
+      </div>
+    `,
+    text: `${template.replace(/-/g, ' ').toUpperCase()}\n\n${JSON.stringify(variables, null, 2)}`,
+  };
 }
 
 /**
@@ -69,6 +98,12 @@ export async function renderEmailTemplate(
 ): Promise<string> {
   try {
     const component = getTemplateComponent(template, variables);
+
+    // Handle placeholder templates that don't use React Email
+    if (component && typeof component === 'object' && 'html' in component) {
+      return component.html;
+    }
+
     const html = render(component);
     return html;
   } catch (error) {
@@ -254,5 +289,83 @@ export async function sendLowStockAlertEmail(
     `Low Stock Alert: ${productData.productName}`,
     'low-stock-alert',
     productData
+  );
+}
+
+/**
+ * Support ticket email helpers
+ */
+
+export async function sendTicketCreatedEmail(
+  to: string | string[],
+  ticketData: {
+    ticketId: string;
+    ticketNumber?: string;
+    subject: string;
+    userName: string;
+    userEmail: string;
+    description: string;
+    priority: string;
+  }
+) {
+  return queueEmail(
+    to,
+    `New Support Ticket: ${ticketData.subject}`,
+    'ticket-created',
+    ticketData
+  );
+}
+
+export async function sendTicketReplyEmail(
+  to: string,
+  replyData: {
+    ticketId: string;
+    ticketNumber?: string;
+    subject: string;
+    replyFrom: string;
+    message: string;
+  }
+) {
+  return queueEmail(
+    to,
+    `New Reply on Ticket: ${replyData.subject}`,
+    'ticket-reply',
+    replyData
+  );
+}
+
+export async function sendTicketAssignedEmail(
+  to: string,
+  assignmentData: {
+    ticketId: string;
+    ticketNumber?: string;
+    subject: string;
+    assignedTo: string;
+    priority: string;
+  }
+) {
+  return queueEmail(
+    to,
+    `Ticket Assigned to You: ${assignmentData.subject}`,
+    'ticket-assigned',
+    assignmentData
+  );
+}
+
+export async function sendTicketStatusChangeEmail(
+  to: string,
+  statusData: {
+    ticketId: string;
+    ticketNumber?: string;
+    subject: string;
+    oldStatus: string;
+    newStatus: string;
+  }
+) {
+  return queueEmail(
+    to,
+    `Ticket Status Updated: ${statusData.subject}`,
+    'ticket-status-change',
+    statusData
   );
 }

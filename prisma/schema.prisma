@@ -31,6 +31,9 @@ model User {
   withdrawalRequestsReviewed WithdrawalRequest[]      @relation("ReviewedBy")
   notifications              Notification[]
   notificationPreference     NotificationPreference?
+  supportTicketsCreated      SupportTicket[]          @relation("TicketUser")
+  supportTicketsAssigned     SupportTicket[]          @relation("TicketAssignee")
+  ticketMessages             TicketMessage[]
 
   @@map("users")
 }
@@ -336,6 +339,7 @@ model BankAccount {
   accountHolder String    @map("account_holder")
   accountType   String    @map("account_type")
   bankName      String    @map("bank_name")
+  isPrimary     Boolean   @default(false) @map("is_primary")
   validatedAt   DateTime? @map("validated_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -345,6 +349,7 @@ model BankAccount {
   withdrawalRequests WithdrawalRequest[]
 
   @@unique([dropshipperId, cbu])
+  @@index([dropshipperId, isPrimary])
   @@map("bank_accounts")
 }
 
@@ -409,4 +414,61 @@ model NotificationPreference {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notification_preferences")
+}
+
+// ============================================================
+// Support Ticket System
+// ============================================================
+
+model SupportTicket {
+  id          String         @id @default(cuid())
+  userId      String         @map("user_id")
+  subject     String
+  description String         @db.Text
+  priority    TicketPriority @default(MEDIUM)
+  status      TicketStatus   @default(OPEN)
+  assignedTo  String?        @map("assigned_to")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user     User            @relation("TicketUser", fields: [userId], references: [id], onDelete: Cascade)
+  assigned User?           @relation("TicketAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
+  messages TicketMessage[]
+
+  @@index([userId, status])
+  @@index([assignedTo, status])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String   @map("ticket_id")
+  userId    String   @map("user_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_messages")
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }
