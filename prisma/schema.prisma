@@ -260,11 +260,12 @@ model WalletTransaction {
 }
 
 enum TransactionType {
-  SALE_COMMISSION
+  ORDER_CHARGE
+  COD_DEDUCTION
+  COD_CREDIT
   DEPOSIT
   WITHDRAWAL
-  REFUND
-  ADJUSTMENT
+  MANUAL_ADJUSTMENT
 }
 
 model DepositRequest {
