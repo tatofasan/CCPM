@@ -27,9 +27,30 @@ export const emailQueue = new Queue('email', {
   },
 });
 
+// Shopify webhook queue configuration
+export const shopifyWebhookQueue = new Queue('shopify-webhooks', {
+  connection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 2000, // Initial delay of 2 seconds
+    },
+    removeOnComplete: {
+      count: 1000, // Keep last 1000 completed webhooks
+      age: 7 * 24 * 3600, // Keep completed webhooks for 7 days
+    },
+    removeOnFail: {
+      count: 1000, // Keep last 1000 failed webhooks
+      age: 30 * 24 * 3600, // Keep failed webhooks for 30 days (for debugging)
+    },
+  },
+});
+
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   await emailQueue.close();
+  await shopifyWebhookQueue.close();
   await connection.quit();
 });
 
