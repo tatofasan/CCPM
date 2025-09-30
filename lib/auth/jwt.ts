@@ -11,6 +11,7 @@ export interface JWTPayload {
   email: string;
   role: string;
   status: string;
+  dropshipperId?: string; // For dropshipper users
 }
 
 /**

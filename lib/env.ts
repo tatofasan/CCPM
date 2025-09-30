@@ -22,6 +22,11 @@ const envSchema = z.object({
   SHOPIFY_CLIENT_ID: z.string().optional(),
   SHOPIFY_CLIENT_SECRET: z.string().optional(),
   SHOPIFY_WEBHOOK_SECRET: z.string().optional(),
+
+  // Email Service
+  SENDGRID_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().email().optional(),
+  EMAIL_FROM_NAME: z.string().default('CCPM Dropshipping'),
 })
 
 export type Env = z.infer<typeof envSchema>

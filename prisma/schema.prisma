@@ -25,10 +25,12 @@ model User {
 
   // Relations
   dropshipperProfile         DropshipperProfile?
-  orderEventsChanged         OrderEvent[]        @relation("ChangedBy")
-  walletTransactionsCreated  WalletTransaction[] @relation("CreatedBy")
-  depositRequestsReviewed    DepositRequest[]    @relation("ReviewedBy")
-  withdrawalRequestsReviewed WithdrawalRequest[] @relation("ReviewedBy")
+  orderEventsChanged         OrderEvent[]             @relation("ChangedBy")
+  walletTransactionsCreated  WalletTransaction[]      @relation("CreatedBy")
+  depositRequestsReviewed    DepositRequest[]         @relation("ReviewedBy")
+  withdrawalRequestsReviewed WithdrawalRequest[]      @relation("ReviewedBy")
+  notifications              Notification[]
+  notificationPreference     NotificationPreference?
 
   @@map("users")
 }
@@ -116,21 +118,22 @@ model Warehouse {
 // ============================================================
 
 model Product {
-  id                String            @id @default(cuid())
-  sku               String            @unique
-  name              String
-  description       String?           @db.Text
-  costPrice         Decimal           @map("cost_price") @db.Decimal(12, 2)
-  suggestedPrice    Decimal           @map("suggested_price") @db.Decimal(12, 2)
-  stock             Int               @default(0)
-  lowStockThreshold Int               @default(10) @map("low_stock_threshold")
-  weight            Decimal?          @db.Decimal(10, 2)
-  dimensions        Json?
-  supplierId        String            @map("supplier_id")
-  visibilityType    ProductVisibility @default(PUBLIC) @map("visibility_type")
-  imagesUrls        String[]          @default([]) @map("images_urls")
-  createdAt         DateTime          @default(now()) @map("created_at")
-  updatedAt         DateTime          @updatedAt @map("updated_at")
+  id                  String            @id @default(cuid())
+  sku                 String            @unique
+  name                String
+  description         String?           @db.Text
+  costPrice           Decimal           @map("cost_price") @db.Decimal(12, 2)
+  suggestedPrice      Decimal           @map("suggested_price") @db.Decimal(12, 2)
+  stock               Int               @default(0)
+  lowStockThreshold   Int               @default(10) @map("low_stock_threshold")
+  weight              Decimal?          @db.Decimal(10, 2)
+  dimensions          Json?
+  supplierId          String            @map("supplier_id")
+  visibilityType      ProductVisibility @default(ALL) @map("visibility_type")
+  visibilityTargetIds Json?             @map("visibility_target_ids")
+  imagesUrls          String[]          @default([]) @map("images_urls")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
 
   // Relations
   supplier   Supplier    @relation(fields: [supplierId], references: [id], onDelete: Restrict)
@@ -143,9 +146,9 @@ model Product {
 }
 
 enum ProductVisibility {
-  PUBLIC
-  PRIVATE
-  HIDDEN
+  ALL
+  GROUPS
+  SPECIFIC
 }
 
 // ============================================================
@@ -371,4 +374,39 @@ enum ShopifyStatus {
   ACTIVE
   INACTIVE
   ERROR
+}
+
+// ============================================================
+// Notifications
+// ============================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id            String  @id @default(cuid())
+  userId        String  @unique @map("user_id")
+  emailEnabled  Boolean @default(true) @map("email_enabled")
+  inappEnabled  Boolean @default(true) @map("inapp_enabled")
+  preferences   Json    @default("{}") // { "NEW_ORDER": { "email": true, "inapp": true }, ... }
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }
